@@ -1,92 +1,104 @@
-# DevDeploy
+# 🚀 DevDeploy
 
-DevDeploy is a cost-effective, developer-centric deployment platform designed for freelancers, beginner developers, and startups seeking an affordable alternative to solutions like Vercel or Render. The platform empowers users to deploy full-stack web projects with ease, leveraging their own infrastructure and modern DevOps practices.
-
-## Key Features
-
-- **User Accounts:** Create and manage your own account.
-- **GitHub Integration:** Connect your GitHub repositories for seamless code management.
-- **VPS Connection:** Remotely connect your own Virtual Private Server (VPS) using secure SSH credentials.
-- **Full-Stack Deployments:** Deploy Dockerized web projects (frontend & backend) with CI/CD automation.
-- **One-Time Fee:** Pay a low-cost, one-time service fee per VPS connection (e.g., ৳200), making DevDeploy especially affordable for developers in regions like Bangladesh.
-- **Real-Time Logs:** Access real-time deployment logs and status updates.
-
-## Goals and Objectives
-
-- Offer a simple and intuitive deployment experience.
-- Eliminate the need for in-depth DevOps or server knowledge.
-- Enable automated builds and deployments from GitHub to user VPS.
-- Ensure secure storage and handling of SSH credentials.
-- Provide real-time logs and deployment status.
-- Make the platform affordable and accessible.
-
-## Technology Stack
-
-- **Backend:** Django REST Framework (DRF)
-- **Frontend:** React (Vite + Tailwind CSS)
-- **CI/CD:** Automated pipelines for building and deploying Dockerized projects
-- **VPS Integration:** SSH-based secure connections
-
-## Getting Started
-
-### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- Docker (for deployments)
-- A VPS with SSH access
-
-### Backend Setup (Django + DRF)
-1. Navigate to the `core/` directory:
-   ```sh
-   cd core
-   ```
-2. Create and activate a virtual environment (optional but recommended):
-   ```sh
-   python -m venv env
-   env\Scripts\activate  # On Windows
-   source env/bin/activate  # On Linux/Mac
-   ```
-3. Install dependencies:
-   ```sh
-   pip install -r requirements.txt
-   ```
-4. Run migrations and start the server:
-   ```sh
-   python manage.py migrate
-   python manage.py runserver
-   ```
-
-### Frontend Setup (React)
-1. Navigate to the `frontend/` directory:
-   ```sh
-   cd frontend
-   ```
-2. Install dependencies:
-   ```sh
-   npm install
-   ```
-3. Start the development server:
-   ```sh
-   npm run dev
-   ```
-
-## Deployment Workflow
-1. **Connect GitHub:** Link your GitHub account and select a repository.
-2. **Add VPS:** Provide your VPS SSH credentials securely.
-3. **Configure Project:** Set up your Dockerized project for deployment.
-4. **Automated CI/CD:** Push to GitHub to trigger automated builds and deployments to your VPS.
-5. **Monitor:** View real-time logs and deployment status from the dashboard.
-
-## Security
-- All SSH credentials are securely stored and handled.
-- Only authorized users can access and manage their deployments.
-
-## Contributing
-Contributions are welcome! Please open issues or submit pull requests for improvements, bug fixes, or new features.
-
-## License
-This project is licensed under the MIT License.
+**DevDeploy** is a next-gen, developer-centric deployment platform built for freelancers, beginners, and startups who want a powerful, affordable alternative to Vercel or Render. Deploy your full-stack projects to your own VPS with just a few clicks—no DevOps expertise required.
 
 ---
 
-**DevDeploy** aims to democratize modern DevOps for emerging tech professionals by reducing complexity and recurring costs. Join us in making deployment accessible for everyone!
+## 🌟 Why DevDeploy?
+- **No Recurring Fees:** Pay a one-time, ultra-low service fee per VPS (e.g., ৳200)
+- **Bring Your Own VPS:** Full control, zero vendor lock-in
+- **Modern CI/CD:** Automated builds & deployments from GitHub
+- **Real-Time Logs:** See exactly what’s happening, as it happens
+- **Secure by Design:** SSH credentials are encrypted and never shared
+- **Made for You:** Especially affordable for developers in regions like Bangladesh
+
+---
+
+## 🧩 Microservices Architecture
+DevDeploy is built as a set of modern microservices:
+- **Authentication Service:** User login & registration powered by Spring Boot
+- **API Backend:** Core deployment logic with Django REST Framework (DRF)
+- **Frontend:** Lightning-fast React app (Vite + Tailwind CSS)
+
+---
+
+## 🚦 Key Features
+- **Sign Up & Login** (Spring Boot Auth Service)
+- **Connect GitHub**
+- **Add Your VPS (SSH)**
+- **Deploy Dockerized Projects**
+- **Automated CI/CD**
+- **Real-Time Status & Logs**
+
+---
+
+## 🎯 Goals & Vision
+- Make deployment as easy as pushing to GitHub
+- Remove DevOps complexity for everyone
+- Empower developers to own their infrastructure
+- Keep costs ultra-low and predictable
+
+---
+
+## 🛠️ Tech Stack
+- **Frontend:** React, Vite, Tailwind CSS
+- **Backend:** Django REST Framework
+- **Auth:** Spring Boot microservice
+- **CI/CD:** GitHub Actions, Docker
+- **VPS:** Any server with SSH access
+
+---
+
+## 🚀 Quickstart
+
+### Backend (Django + DRF)
+```sh
+cd core
+python -m venv env
+# Windows:
+env\Scripts\activate
+# Linux/Mac:
+source env/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+### Frontend (React)
+```sh
+cd frontend
+npm install
+npm run dev
+```
+
+### Auth Service (Spring Boot)
+- See `/auth-service` (coming soon) for setup and API docs
+
+---
+
+## 🔄 Deployment Workflow
+1. **Connect GitHub**
+2. **Add VPS (SSH)**
+3. **Configure Dockerized Project**
+4. **Push to Deploy (CI/CD)**
+5. **Monitor Logs & Status**
+
+---
+
+## 🔒 Security
+- All SSH credentials are encrypted and securely stored
+- Only you can access your deployments
+
+---
+
+## 🤝 Contributing
+We love contributions! Open issues, suggest features, or submit PRs.
+
+---
+
+## 📄 License
+MIT License
+
+---
+
+> DevDeploy: Modern DevOps, democratized. Own your deployment journey.
