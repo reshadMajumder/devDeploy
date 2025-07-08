@@ -21,3 +21,23 @@ class Deployment(models.Model):
 
     def __str__(self):
         return f"Deployment to {self.ip_address} ({self.status})"
+
+
+
+
+# using amazon ec2
+class UserInstance(models.Model):
+    instance_id = models.CharField(max_length=50)
+    ip_address = models.GenericIPAddressField()
+    started_at = models.DateTimeField(auto_now_add=True)
+    stopped_at = models.DateTimeField(null=True, blank=True)
+    status = models.CharField(max_length=20, default='running')
+    hourly_rate = models.DecimalField(max_digits=6, decimal_places=3, default=0.020)
+
+    def runtime_hours(self):
+        from django.utils.timezone import now
+        end = self.stopped_at or now()
+        return round((end - self.started_at).total_seconds() / 3600, 2)
+
+    def estimated_cost(self):
+        return round(self.runtime_hours() * float(self.hourly_rate), 4)

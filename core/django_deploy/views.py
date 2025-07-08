@@ -5,7 +5,18 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from .utils import connect_vps
 from .utils import write_pem_tempfile, generate_dockerfile, generate_docker_compose, generate_nginx_conf
+from .utils import generate_docker_compose_for_deploy, generate_nginx_conf_for_deploy, sftp_write_files, sftp_write_env_file
+from .utils import generate_system_nginx_conf, upload_and_enable_nginx_conf
 from .models import Deployment, VPS
+
+
+from .aws import create_instance
+from .models import UserInstance
+from django.utils.timezone import now
+
+
+
+
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
@@ -104,6 +115,7 @@ def deploy_project(request):
     django_root = request.data.get('django_root')
     wsgi_path = request.data.get('wsgi_path')
     env_file = request.FILES.get('env_file')
+    server_name = request.data.get('server_name', ip)  # allow custom domain, fallback to IP
 
     if not ip or not repo_url or not django_root or not wsgi_path:
         return Response({'status': 'error', 'message': 'Missing required fields'})
@@ -118,87 +130,26 @@ def deploy_project(request):
         ssh.exec_command(f"rm -rf {project_name}")
         ssh.exec_command(f"git clone {repo_url}")
 
+        # Generate deployment files using utils
         dockerfile = generate_dockerfile(wsgi_path)
-        # Compose file: include env_file only if env_file is present
-        if env_file:
-            compose_file = '''
-version: '3.8'
-services:
-  web:
-    build: .
-    env_file:
-      - .env
-    expose:
-      - "8000"
-    volumes:
-      - .:/app
-    restart: always
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./static:/app/static
-    depends_on:
-      - web
-'''
-        else:
-            compose_file = '''
-version: '3.8'
-services:
-  web:
-    build: .
-    expose:
-      - "8000"
-    volumes:
-      - .:/app
-    restart: always
-  nginx:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./static:/app/static
-    depends_on:
-      - web
-'''
-        # Nginx conf for Dockerized setup
-        nginx_conf = '''
-server {
-    listen 80;
-    server_name _;
-
-    location /static/ {
-        alias /app/static/;
-    }
-
-    location / {
-        proxy_pass http://web:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-'''
-
+        # Compose file: only web service, no nginx, no static volume, .env only if present
+        compose_file = generate_docker_compose(env_file=bool(env_file))
         remote_path = f"/home/ubuntu/{project_name}/{django_root}"
         sftp = ssh.open_sftp()
 
-        for filename, content in {
+        # Write Dockerfile, docker-compose.yml
+        sftp_write_files(sftp, remote_path, {
             "Dockerfile": dockerfile,
-            "docker-compose.yml": compose_file,
-            "nginx.conf": nginx_conf
-        }.items():
-            with sftp.file(f"{remote_path}/{filename}", 'w') as f:
-                f.write(content)
+            "docker-compose.yml": compose_file
+        })
 
+        # Write .env if provided
         if env_file:
-            with sftp.file(f"{remote_path}/.env", 'w') as f:
-                for chunk in env_file.chunks():
-                    f.write(chunk.decode('utf-8'))
+            sftp_write_env_file(sftp, remote_path, env_file)
+
+        # Generate and upload system nginx config
+        nginx_conf = generate_system_nginx_conf(server_name)
+        upload_and_enable_nginx_conf(ssh, sftp, nginx_conf, server_name)
 
         sftp.close()
 
@@ -223,11 +174,14 @@ server {
             status="deployed"
         )
 
-        return Response({'status': 'success', 'message': f'Project deployed at http://{ip}', 'stdout': out})
+        return Response({'status': 'success', 'message': f'Project deployed at http://{server_name}', 'stdout': out})
     except VPS.DoesNotExist:
         return Response({'status': 'error', 'message': 'VPS not found. Connect VPS first.'})
     except Exception as e:
         return Response({'status': 'error', 'message': str(e)})
+
+
+
 
 @api_view(['POST'])
 def redeploy_project(request):
@@ -242,9 +196,10 @@ def redeploy_project(request):
         ssh = connect_vps(ip, pem_path)
         project_name = os.path.basename(repo_url).replace('.git', '')
         remote_path = f"/home/ubuntu/{project_name}/{django_root}"
-        # Stop and remove running containers, then rebuild and restart
+        # Stop and remove running containers,git pull then rebuild and restart
         commands = [
             f"cd {remote_path} && sudo docker-compose down",
+            # f"cd {remote_path} && git pull",
             f"cd {remote_path} && sudo docker-compose up --build -d"
         ]
         details = []
@@ -269,5 +224,48 @@ def redeploy_project(request):
         return Response({'status': 'success', 'message': 'Project redeployed', 'details': details})
     except VPS.DoesNotExist:
         return Response({'status': 'error', 'message': 'VPS not found. Connect VPS first.'})
+    except Exception as e:
+        return Response({'status': 'error', 'message': str(e)})
+
+
+
+
+@api_view(['POST'])
+@parser_classes([MultiPartParser, FormParser])
+def deploy_project_aws(request):
+    repo_url = request.data.get('repo_url')
+    django_root = request.data.get('django_root')
+    wsgi_path = request.data.get('wsgi_path')
+    env_file = request.FILES.get('env_file')
+
+    try:
+        # 🔥 Create EC2 instance
+        instance_id, ip_address = create_instance()
+
+        # 💾 Save to DB
+        UserInstance.objects.create(
+            instance_id=instance_id,
+            ip_address=ip_address
+        )
+
+        # 🔐 Connect via SSH
+        pem_path = '/path/to/deploy-key.pem'  # Your local .pem path
+        ssh = connect_vps(ip_address, pem_path)
+
+        # 🧰 Install dependencies
+        commands = [
+            "sudo apt update",
+            "sudo apt install -y git docker.io docker-compose nginx",
+            "sudo systemctl enable docker",
+            "sudo systemctl start docker"
+        ]
+        for cmd in commands:
+            ssh.exec_command(cmd)
+
+        # 📦 Clone repo and deploy (same as before)
+        ...
+        ssh.close()
+
+        return Response({'status': 'success', 'message': f'Deployed at http://{ip_address}'})
     except Exception as e:
         return Response({'status': 'error', 'message': str(e)})
