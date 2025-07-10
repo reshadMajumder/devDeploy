@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'accounts',
     'django_deploy',
+    'react_deploy',
 ]
 
 MIDDLEWARE = [
