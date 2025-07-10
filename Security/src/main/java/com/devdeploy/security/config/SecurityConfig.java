@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Configuration
 @EnableWebSecurity
@@ -21,6 +22,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
     private final CustomOAuth2UserService customOAuth2UserService;
+
+    private final CustomOAuth2SuccessHandler customOAuth2SuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -40,7 +43,7 @@ public class SecurityConfig {
             .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())) // For H2 console
             .oauth2Login(oauth2 -> oauth2
                 .loginPage("/oauth2/authorization/google")
-                .defaultSuccessUrl("/dashboard", true)
+                .successHandler(customOAuth2SuccessHandler)
                 .userInfoEndpoint(userInfo -> userInfo
                     .userService(customOAuth2UserService)
                 )

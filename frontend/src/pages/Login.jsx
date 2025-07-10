@@ -156,6 +156,23 @@ const Login = () => {
               </Link>
             </p>
           </div>
+          <a href="http://localhost:8081/oauth2/authorization/google">
+            <button
+              type="button"
+              style={{
+                background: "#4285F4",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "4px",
+                fontSize: "16px",
+                cursor: "pointer",
+                marginTop: "10px"
+              }}
+            >
+              Login with Google
+            </button>
+          </a>
         </div>
       </div>
     </div>
