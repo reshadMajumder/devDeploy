@@ -1,5 +1,6 @@
 package com.devdeploy.security.config;
 
+import com.devdeploy.security.service.CustomOAuth2UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,6 +20,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+    private final CustomOAuth2UserService customOAuth2UserService;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -35,7 +37,14 @@ public class SecurityConfig {
             )
             .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
-            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())); // For H2 console
+            .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.disable())) // For H2 console
+            .oauth2Login(oauth2 -> oauth2
+                .loginPage("/oauth2/authorization/google")
+                .defaultSuccessUrl("/dashboard", true)
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService)
+                )
+            );
 
         return http.build();
     }
