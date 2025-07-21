@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'accounts',
     'django_deploy',
     'react_deploy',
+    'node_deploy',
 ]
 
 MIDDLEWARE = [

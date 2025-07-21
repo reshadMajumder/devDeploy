@@ -1,5 +1,8 @@
 import boto3
 import os
+import dotenv
+
+dotenv.load_dotenv()
 
 def create_instance():
     ec2 = boto3.resource(
@@ -15,7 +18,7 @@ def create_instance():
         MinCount=1,
         MaxCount=1,
         KeyName=os.getenv('AWS_KEY_PAIR_NAME'),
-        SecurityGroups=['launch-wizard-1'],  # Must allow ports 22, 80
+        SecurityGroups=['launch-wizard-10'],  # <- Ensure this group allows ports 22 & 80
         TagSpecifications=[{
             'ResourceType': 'instance',
             'Tags': [{'Key': 'Name', 'Value': 'AutoDeploy'}]

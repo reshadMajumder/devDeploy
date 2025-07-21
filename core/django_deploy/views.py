@@ -117,14 +117,17 @@ def deploy_project(request):
     env_file = request.FILES.get('env_file')
     server_name = request.data.get('server_name', ip)  # allow custom domain, fallback to IP
 
-    if not ip or not repo_url or not django_root or not wsgi_path:
+    project_name = os.path.basename(repo_url).replace('.git', '')
+    if not django_root:
+        django_root = project_name
+
+    if not ip or not repo_url or  not wsgi_path:
         return Response({'status': 'error', 'message': 'Missing required fields'})
 
     try:
         vps = VPS.objects.get(ip_address=ip)
         pem_path = write_pem_tempfile(vps.pem_file_name, vps.pem_file_content)
         ssh = connect_vps(ip, pem_path)
-        project_name = os.path.basename(repo_url).replace('.git', '')
 
         # Remove any existing project folder
         ssh.exec_command(f"rm -rf {project_name}")
@@ -263,9 +266,80 @@ def deploy_project_aws(request):
             ssh.exec_command(cmd)
 
         # 📦 Clone repo and deploy (same as before)
-        ...
+        project_name = os.path.basename(repo_url).replace('.git', '')
+        django_root = request.data.get('django_root')
+        project_name = os.path.basename(repo_url).replace('.git', '')
+        if not django_root:
+            django_root = project_name
+        dockerfile = generate_dockerfile(wsgi_path)
+        compose_file = generate_docker_compose(env_file=bool(env_file))
+        remote_path = f"/home/ubuntu/{project_name}/{django_root}"
+        ssh.exec_command(f"rm -rf {project_name}")
+        ssh.exec_command(f"git clone {repo_url}")
+        sftp = ssh.open_sftp()
+        sftp_write_files(sftp, remote_path, {
+            "Dockerfile": dockerfile,
+            "docker-compose.yml": compose_file
+        })
+        if env_file:
+            sftp_write_env_file(sftp, remote_path, env_file)
+        nginx_conf = generate_system_nginx_conf(ip_address)
+        upload_and_enable_nginx_conf(ssh, sftp, nginx_conf, ip_address)
+        sftp.close()
+        start_cmd = f"cd {project_name}/{django_root} && sudo docker-compose up --build -d"
+        stdin, stdout, stderr = ssh.exec_command(start_cmd)
+        exit_status = stdout.channel.recv_exit_status()
+        out = stdout.read().decode()
+        err = stderr.read().decode()
         ssh.close()
-
-        return Response({'status': 'success', 'message': f'Deployed at http://{ip_address}'})
+        if exit_status != 0:
+            return Response({'status': 'error', 'message': 'docker-compose up failed', 'stdout': out, 'stderr': err})
+        return Response({'status': 'success', 'message': f'Deployed at http://{ip_address}', 'stdout': out})
     except Exception as e:
         return Response({'status': 'error', 'message': str(e)})
+
+
+
+@api_view(['GET'])
+def docker_containers(request):
+    """List all Docker containers (running and stopped) on the VPS."""
+    ip = request.data.get('ip')
+    if not ip:
+        return Response({'status': 'error', 'message': 'Missing required field: ip'})
+    try:
+        vps = VPS.objects.get(ip_address=ip)
+        pem_path = write_pem_tempfile(vps.pem_file_name, vps.pem_file_content)
+        ssh = connect_vps(ip, pem_path)
+        cmd = "sudo docker ps -a --format '{{json .}}'"
+        stdin, stdout, stderr = ssh.exec_command(cmd)
+        containers = [eval(line) for line in stdout.read().decode().splitlines() if line.strip()]
+        ssh.close()
+        os.unlink(pem_path)
+        return Response({'status': 'success', 'containers': containers})
+    except Exception as e:
+        return Response({'status': 'error', 'message': str(e)})
+
+@api_view(['POST'])
+def delete_docker_container(request):
+    """Delete a Docker container by name or ID on the VPS."""
+    ip = request.data.get('ip')
+    container = request.data.get('container')
+    if not ip or not container:
+        return Response({'status': 'error', 'message': 'Missing required fields: ip, container'})
+    try:
+        vps = VPS.objects.get(ip_address=ip)
+        pem_path = write_pem_tempfile(vps.pem_file_name, vps.pem_file_content)
+        ssh = connect_vps(ip, pem_path)
+        cmd = f"sudo docker rm -f {container}"
+        stdin, stdout, stderr = ssh.exec_command(cmd)
+        out = stdout.read().decode()
+        err = stderr.read().decode()
+        ssh.close()
+        os.unlink(pem_path)
+        if err.strip():
+            return Response({'status': 'error', 'message': err.strip()})
+        return Response({'status': 'success', 'message': out.strip()})
+    except Exception as e:
+        return Response({'status': 'error', 'message': str(e)})
+
+

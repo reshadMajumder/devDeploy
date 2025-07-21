@@ -15,7 +15,7 @@ class Deployment(models.Model):
     ip_address = models.GenericIPAddressField()
     repo_url = models.URLField()
     django_root = models.CharField(max_length=255)
-    wsgi_path = models.CharField(max_length=255)
+    wsgi_path = models.CharField(max_length=255,null=True, blank=True)
     deployed_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=50, default="pending")
 
