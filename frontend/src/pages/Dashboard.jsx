@@ -1,11 +1,71 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDeployments } from '../contexts/DeploymentContext';
 import { Plus, Github, ExternalLink, Trash2, Clock, CheckCircle, AlertCircle, Activity, Calendar, Globe } from 'lucide-react';
 import NewDeploymentModal from '../components/NewDeploymentModal';
+import axios from 'axios';
+
+const API_BASE = 'http://127.0.0.1:8000/api/django';
 
 const Dashboard = () => {
   const { deployments, deleteDeployment } = useDeployments();
   const [showNewDeployment, setShowNewDeployment] = useState(false);
+  // VPS state
+  const [vpsList, setVpsList] = useState([]);
+  const [showAddVps, setShowAddVps] = useState(false);
+  const [newVps, setNewVps] = useState({ ip: '', name: '', pem_file: null });
+  const [vpsLoading, setVpsLoading] = useState(false);
+  const [vpsError, setVpsError] = useState('');
+  const [installStatus, setInstallStatus] = useState({}); // { [ip]: { loading, success, error, message } }
+
+  useEffect(() => { fetchVpsList(); }, []);
+
+  const fetchVpsList = async () => {
+    setVpsLoading(true);
+    setVpsError('');
+    try {
+      const res = await axios.get(`${API_BASE}/connect-vps/`);
+      setVpsList(res.data.vps || []);
+    } catch (err) {
+      setVpsError('Failed to fetch VPS list');
+    }
+    setVpsLoading(false);
+  };
+
+  const handleAddVps = async (e) => {
+    e.preventDefault();
+    setVpsError('');
+    const formData = new FormData();
+    formData.append('ip', newVps.ip);
+    formData.append('name', newVps.name);
+    formData.append('pem_file', newVps.pem_file);
+    try {
+      await axios.post(`${API_BASE}/connect-vps/`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      setShowAddVps(false);
+      setNewVps({ ip: '', name: '', pem_file: null });
+      fetchVpsList();
+    } catch (err) {
+      setVpsError('Failed to add VPS');
+    }
+  };
+
+  // Install dependencies for a VPS
+  const handleInstallDependencies = async (ip) => {
+    setInstallStatus(prev => ({ ...prev, [ip]: { loading: true, success: false, error: false, message: '' } }));
+    try {
+      const res = await axios.post(`${API_BASE}/install-dependencies/`, { ip });
+      setInstallStatus(prev => ({
+        ...prev,
+        [ip]: { loading: false, success: true, error: false, message: res.data.message || 'Dependencies installed!' }
+      }));
+    } catch (err) {
+      setInstallStatus(prev => ({
+        ...prev,
+        [ip]: { loading: false, success: false, error: true, message: err.response?.data?.message || 'Failed to install dependencies' }
+      }));
+    }
+  };
 
   const getStatusIcon = (status) => {
     switch (status) {
@@ -229,6 +289,82 @@ const Dashboard = () => {
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* VPS Section */}
+        <div className="my-8">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold">Your VPSs</h2>
+            <button className="btn-primary" onClick={() => setShowAddVps(true)}>
+              Add VPS
+            </button>
+          </div>
+          {vpsLoading ? (
+            <div>Loading...</div>
+          ) : vpsError ? (
+            <div className="text-red-500">{vpsError}</div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {vpsList.map((vps) => (
+                <div key={vps.id} className="card p-6 flex flex-col space-y-2">
+                  <div className="font-bold text-lg">{vps.name}</div>
+                  <div className="text-gray-600 text-sm">IP: {vps.ip_address}</div>
+                  <div className="text-xs text-gray-400">PEM: {vps.pem_file_name}</div>
+                  <div className={`text-xs ${vps.connected ? 'text-green-600' : 'text-red-600'}`}>{vps.connected ? 'Connected' : 'Not Connected'}</div>
+                  <button
+                    className="btn-secondary mt-2"
+                    onClick={() => handleInstallDependencies(vps.ip_address)}
+                    disabled={installStatus[vps.ip_address]?.loading}
+                  >
+                    {installStatus[vps.ip_address]?.loading ? 'Installing...' : 'Install Dependencies'}
+                  </button>
+                  {installStatus[vps.ip_address]?.success && (
+                    <div className="text-green-600 text-xs">{installStatus[vps.ip_address].message}</div>
+                  )}
+                  {installStatus[vps.ip_address]?.error && (
+                    <div className="text-red-600 text-xs">{installStatus[vps.ip_address].message}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Add VPS Modal */}
+        {showAddVps && (
+          <div className="modal">
+            <form onSubmit={handleAddVps} className="card p-6 space-y-4">
+              <h3 className="text-lg font-bold">Add New VPS</h3>
+              <input
+                type="text"
+                placeholder="VPS Name"
+                value={newVps.name}
+                onChange={e => setNewVps({ ...newVps, name: e.target.value })}
+                required
+                className="input"
+              />
+              <input
+                type="text"
+                placeholder="VPS IP"
+                value={newVps.ip}
+                onChange={e => setNewVps({ ...newVps, ip: e.target.value })}
+                required
+                className="input"
+              />
+              <input
+                type="file"
+                accept=".pem"
+                onChange={e => setNewVps({ ...newVps, pem_file: e.target.files[0] })}
+                required
+                className="input"
+              />
+              {vpsError && <div className="text-red-500">{vpsError}</div>}
+              <div className="flex space-x-2">
+                <button type="submit" className="btn-primary">Add VPS</button>
+                <button type="button" className="btn-secondary" onClick={() => setShowAddVps(false)}>Cancel</button>
+              </div>
+            </form>
           </div>
         )}
 

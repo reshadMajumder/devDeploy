@@ -18,9 +18,15 @@ from django.utils.timezone import now
 
 
 
-@api_view(['POST'])
+@api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
 def connect_vps_view(request):
+    if request.method == 'GET':
+        # Return all available VPSs (do not include sensitive pem_file_content)
+        vps_list = VPS.objects.all().values('id', 'ip_address', 'name', 'connected', 'pem_file_name')
+        return Response({'status': 'success', 'vps': list(vps_list)})
+
+    # POST method: connect a new VPS
     ip = request.data.get('ip')
     name = request.data.get('name')
     pem_file = request.FILES.get('pem_file')
