@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
+import DeployProject from './pages/DeployProject';
 
 function App() {
   return (
@@ -41,6 +42,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="deploy-project/:vpsId"
+                element={
+                  <ProtectedRoute>
+                    <DeployProject />
                   </ProtectedRoute>
                 }
               />

@@ -3,11 +3,13 @@ import { useDeployments } from '../contexts/DeploymentContext';
 import { Plus, Github, ExternalLink, Trash2, Clock, CheckCircle, AlertCircle, Activity, Calendar, Globe } from 'lucide-react';
 import NewDeploymentModal from '../components/NewDeploymentModal';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://127.0.0.1:8000/api/django';
 
 const Dashboard = () => {
   const { deployments, deleteDeployment } = useDeployments();
+  const navigate = useNavigate();
   const [showNewDeployment, setShowNewDeployment] = useState(false);
   // VPS state
   const [vpsList, setVpsList] = useState([]);
@@ -325,6 +327,13 @@ const Dashboard = () => {
                   {installStatus[vps.ip_address]?.error && (
                     <div className="text-red-600 text-xs">{installStatus[vps.ip_address].message}</div>
                   )}
+                  <button
+                    className="btn-primary mt-2"
+                    type="button"
+                    onClick={e => { e.stopPropagation(); navigate(`/deploy-project/${vps.id}`); }}
+                  >
+                    Deploy Project
+                  </button>
                 </div>
               ))}
             </div>
