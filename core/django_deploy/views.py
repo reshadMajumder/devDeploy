@@ -309,7 +309,7 @@ def deploy_project_aws(request):
 @api_view(['GET'])
 def docker_containers(request):
     """List all Docker containers (running and stopped) on the VPS."""
-    ip = request.data.get('ip')
+    ip = request.query_params.get('ip')  # <-- use query_params for GET
     if not ip:
         return Response({'status': 'error', 'message': 'Missing required field: ip'})
     try:
