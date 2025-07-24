@@ -26,8 +26,8 @@ cd devDeploy
 #### a. Create and activate a virtual environment
 ```bash
 cd core
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3 -m venv env
+source env\bin\activate  # On Windows: venv\Scripts\activate(use command prompt not the powershell)
 ```
 
 #### b. Install dependencies
