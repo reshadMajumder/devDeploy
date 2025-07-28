@@ -5,6 +5,12 @@ import { ArrowLeft, Trash2 } from 'lucide-react';
 
 const API_BASE = 'http://127.0.0.1:8000/api/django';
 
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const DeployProject = () => {
   const { vpsId } = useParams();
   const navigate = useNavigate();
@@ -27,7 +33,7 @@ const DeployProject = () => {
   const [containersError, setContainersError] = useState('');
 
   useEffect(() => {
-    axios.get(`${API_BASE}/connect-vps/`).then(res => {
+    axios.get(`${API_BASE}/connect-vps/`, { headers: { ...getAuthHeaders() } }).then(res => {
       const found = (res.data.vps || []).find(v => String(v.id) === String(vpsId));
       setVps(found);
       if (found) fetchContainers(found.ip_address);
@@ -51,7 +57,7 @@ const DeployProject = () => {
     if (envFile) formData.append('env_file', envFile);
     try {
       const res = await axios.post(`${API_BASE}/deploy-project/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data', ...getAuthHeaders() }
       });
       setStatus(res.data.message || 'Deployment started!');
       // Optionally refresh containers after deploy
@@ -67,7 +73,9 @@ const DeployProject = () => {
     setContainersLoading(true);
     setContainersError('');
     try {
-      const res = await axios.get(`${API_BASE}/docker-containers/?ip=${encodeURIComponent(ip)}`);
+      const res = await axios.get(`${API_BASE}/docker-containers/?ip=${encodeURIComponent(ip)}`, {
+        headers: { ...getAuthHeaders() }
+      });
       setContainers(res.data.containers || []);
     } catch (err) {
       setContainersError('Failed to fetch containers');
@@ -81,6 +89,8 @@ const DeployProject = () => {
       await axios.post(`${API_BASE}/delete-docker-container/`, {
         ip: vps.ip_address,
         container: containerId
+      }, {
+        headers: { ...getAuthHeaders() }
       });
       setDeleteStatus(prev => ({ ...prev, [containerId]: 'success' }));
       fetchContainers(vps.ip_address);

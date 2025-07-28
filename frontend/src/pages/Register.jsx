@@ -5,7 +5,9 @@ import { Eye, EyeOff, Zap, AlertCircle, CheckCircle } from 'lucide-react';
 
 const Register = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -35,7 +37,13 @@ const Register = () => {
     }
 
     try {
-      const result = await register(formData.name, formData.email, formData.password);
+      const result = await register(
+        formData.username,
+        formData.email,
+        formData.password,
+        formData.firstName,
+        formData.lastName
+      );
       if (result.success) {
         navigate('/dashboard');
       } else {
@@ -91,17 +99,49 @@ const Register = () => {
             )}
 
             <div>
-              <label htmlFor="name" className="block text-sm font-semibold text-gray-900 mb-2">
-                Full name
+              <label htmlFor="username" className="block text-sm font-semibold text-gray-900 mb-2">
+                Username
               </label>
               <input
-                id="name"
-                name="name"
+                id="username"
+                name="username"
                 type="text"
                 required
                 className="input-field"
-                placeholder="Enter your full name"
-                value={formData.name}
+                placeholder="Enter your username"
+                value={formData.username}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="firstName" className="block text-sm font-semibold text-gray-900 mb-2">
+                First Name
+              </label>
+              <input
+                id="firstName"
+                name="firstName"
+                type="text"
+                required
+                className="input-field"
+                placeholder="Enter your first name"
+                value={formData.firstName}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="lastName" className="block text-sm font-semibold text-gray-900 mb-2">
+                Last Name
+              </label>
+              <input
+                id="lastName"
+                name="lastName"
+                type="text"
+                required
+                className="input-field"
+                placeholder="Enter your last name"
+                value={formData.lastName}
                 onChange={handleChange}
               />
             </div>

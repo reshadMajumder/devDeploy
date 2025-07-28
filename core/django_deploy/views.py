@@ -321,6 +321,7 @@ def deploy_project_aws(request):
 
 
 @api_view(['GET'])
+@jwt_required
 def docker_containers(request):
     """List all Docker containers (running and stopped) on the VPS."""
     ip = request.query_params.get('ip')  # <-- use query_params for GET
@@ -340,6 +341,7 @@ def docker_containers(request):
         return Response({'status': 'error', 'message': str(e)})
 
 @api_view(['POST'])
+@jwt_required
 def delete_docker_container(request):
     """Delete a Docker container by name or ID on the VPS."""
     ip = request.data.get('ip')

@@ -5,7 +5,7 @@ import { Eye, EyeOff, Zap, AlertCircle } from 'lucide-react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
-    email: '',
+    username: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +21,7 @@ const Login = () => {
     setError('');
 
     try {
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData.username, formData.password);
       if (result.success) {
         navigate('/dashboard');
       } else {
@@ -68,17 +68,17 @@ const Login = () => {
             )}
 
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-gray-900 mb-2">
-                Email address
+              <label htmlFor="username" className="block text-sm font-semibold text-gray-900 mb-2">
+                Username
               </label>
               <input
-                id="email"
-                name="email"
-                type="email"
+                id="username"
+                name="username"
+                type="text"
                 required
                 className="input-field"
-                placeholder="Enter your email"
-                value={formData.email}
+                placeholder="Enter your username"
+                value={formData.username}
                 onChange={handleChange}
               />
             </div>

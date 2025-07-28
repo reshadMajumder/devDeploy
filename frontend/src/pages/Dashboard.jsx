@@ -7,6 +7,12 @@ import { useNavigate } from 'react-router-dom';
 
 const API_BASE = 'http://127.0.0.1:8000/api/django';
 
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
 const Dashboard = () => {
   const { deployments, deleteDeployment } = useDeployments();
   const navigate = useNavigate();
@@ -25,7 +31,9 @@ const Dashboard = () => {
     setVpsLoading(true);
     setVpsError('');
     try {
-      const res = await axios.get(`${API_BASE}/connect-vps/`);
+      const res = await axios.get(`${API_BASE}/connect-vps/`, {
+        headers: { ...getAuthHeaders() }
+      });
       setVpsList(res.data.vps || []);
     } catch (err) {
       setVpsError('Failed to fetch VPS list');
@@ -42,7 +50,7 @@ const Dashboard = () => {
     formData.append('pem_file', newVps.pem_file);
     try {
       await axios.post(`${API_BASE}/connect-vps/`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data', ...getAuthHeaders() }
       });
       setShowAddVps(false);
       setNewVps({ ip: '', name: '', pem_file: null });
@@ -56,7 +64,9 @@ const Dashboard = () => {
   const handleInstallDependencies = async (ip) => {
     setInstallStatus(prev => ({ ...prev, [ip]: { loading: true, success: false, error: false, message: '' } }));
     try {
-      const res = await axios.post(`${API_BASE}/install-dependencies/`, { ip });
+      const res = await axios.post(`${API_BASE}/install-dependencies/`, { ip }, {
+        headers: { ...getAuthHeaders() }
+      });
       setInstallStatus(prev => ({
         ...prev,
         [ip]: { loading: false, success: true, error: false, message: res.data.message || 'Dependencies installed!' }
@@ -194,105 +204,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Deployments List */}
-        {deployments.length === 0 ? (
-          <div className="card p-12 text-center">
-            <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
-              <Github className="h-10 w-10 text-gray-400" />
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">No deployments yet</h3>
-            <p className="text-gray-600 mb-8 text-lg max-w-md mx-auto">
-              Get started by deploying your first project from GitHub. It only takes a few seconds!
-            </p>
-            <button
-              onClick={() => setShowNewDeployment(true)}
-              className="btn-primary"
-            >
-              Deploy your first project
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-gray-900">Your Deployments</h2>
-            <div className="grid gap-6">
-              {deployments.map((deployment) => (
-                <div key={deployment.id} className="card-hover p-8">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-4 mb-4">
-                        <h3 className="text-2xl font-bold text-gray-900">{deployment.name}</h3>
-                        <span className="px-3 py-1 text-sm font-medium bg-gray-100 text-gray-800 rounded-full">
-                          {deployment.type}
-                        </span>
-                        <div className={`${getStatusBadge(deployment.status)} flex items-center space-x-2`}>
-                          {getStatusIcon(deployment.status)}
-                          <span>{getStatusText(deployment.status)}</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-6 text-sm text-gray-600 mb-4">
-                        <a
-                          href={deployment.githubUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center space-x-2 hover:text-gray-900 transition-colors duration-200"
-                        >
-                          <Github className="h-4 w-4" />
-                          <span>View Repository</span>
-                        </a>
-                        {deployment.url && (
-                          <a
-                            href={deployment.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center space-x-2 hover:text-gray-900 transition-colors duration-200"
-                          >
-                            <Globe className="h-4 w-4" />
-                            <span>Visit Site</span>
-                          </a>
-                        )}
-                      </div>
-                      
-                      <div className="flex flex-wrap items-center gap-6 text-sm text-gray-500">
-                        <div className="flex items-center space-x-2">
-                          <Calendar className="h-4 w-4" />
-                          <span>Created: {formatDate(deployment.createdAt)}</span>
-                        </div>
-                        {deployment.lastDeployed && (
-                          <div className="flex items-center space-x-2">
-                            <Activity className="h-4 w-4" />
-                            <span>Last deployed: {formatDate(deployment.lastDeployed)}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-3">
-                      {deployment.url && (
-                        <a
-                          href={deployment.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-secondary flex items-center space-x-2"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          <span>Visit</span>
-                        </a>
-                      )}
-                      <button
-                        onClick={() => deleteDeployment(deployment.id)}
-                        className="p-3 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
-                        title="Delete deployment"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* VPS Section */}
         <div className="my-8">
@@ -342,36 +254,69 @@ const Dashboard = () => {
 
         {/* Add VPS Modal */}
         {showAddVps && (
-          <div className="modal">
-            <form onSubmit={handleAddVps} className="card p-6 space-y-4">
-              <h3 className="text-lg font-bold">Add New VPS</h3>
-              <input
-                type="text"
-                placeholder="VPS Name"
-                value={newVps.name}
-                onChange={e => setNewVps({ ...newVps, name: e.target.value })}
-                required
-                className="input"
-              />
-              <input
-                type="text"
-                placeholder="VPS IP"
-                value={newVps.ip}
-                onChange={e => setNewVps({ ...newVps, ip: e.target.value })}
-                required
-                className="input"
-              />
-              <input
-                type="file"
-                accept=".pem"
-                onChange={e => setNewVps({ ...newVps, pem_file: e.target.files[0] })}
-                required
-                className="input"
-              />
-              {vpsError && <div className="text-red-500">{vpsError}</div>}
-              <div className="flex space-x-2">
-                <button type="submit" className="btn-primary">Add VPS</button>
-                <button type="button" className="btn-secondary" onClick={() => setShowAddVps(false)}>Cancel</button>
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <form
+              onSubmit={handleAddVps}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 border border-gray-100 animate-fade-in"
+            >
+              <h3 className="text-2xl font-bold mb-6 text-gray-900 flex items-center">
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg mr-3">
+                  <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M12 2v20m10-10H2" stroke="#fff" strokeWidth="2" strokeLinecap="round"/></svg>
+                </span>
+                Add New VPS
+              </h3>
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="vps-name">VPS Name</label>
+                  <input
+                    id="vps-name"
+                    type="text"
+                    placeholder="e.g. dev-server-1"
+                    value={newVps.name}
+                    onChange={e => setNewVps({ ...newVps, name: e.target.value })}
+                    required
+                    className="input-field w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="vps-ip">VPS IP</label>
+                  <input
+                    id="vps-ip"
+                    type="text"
+                    placeholder="e.g. 13.53.177.68"
+                    value={newVps.ip}
+                    onChange={e => setNewVps({ ...newVps, ip: e.target.value })}
+                    required
+                    className="input-field w-full"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="pem-file">PEM File</label>
+                  <input
+                    id="pem-file"
+                    type="file"
+                    accept=".pem"
+                    onChange={e => setNewVps({ ...newVps, pem_file: e.target.files[0] })}
+                    required
+                    className="input-field w-full file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                </div>
+                {vpsError && <div className="text-red-500 text-sm mt-2">{vpsError}</div>}
+                <div className="flex space-x-3 pt-2">
+                  <button
+                    type="submit"
+                    className="flex-1 btn-primary py-3 text-base font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-150"
+                  >
+                    Add VPS
+                  </button>
+                  <button
+                    type="button"
+                    className="flex-1 btn-secondary py-3 text-base font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 transition-all duration-150"
+                    onClick={() => setShowAddVps(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             </form>
           </div>
