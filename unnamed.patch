@@ -1,0 +1,17 @@
+Index: Security/src/main/java/com/devdeploy/security/service/JwtService.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/Security/src/main/java/com/devdeploy/security/service/JwtService.java b/Security/src/main/java/com/devdeploy/security/service/JwtService.java
+--- a/Security/src/main/java/com/devdeploy/security/service/JwtService.java
++++ b/Security/src/main/java/com/devdeploy/security/service/JwtService.java	(date 1753621785567)
+@@ -71,7 +71,7 @@
+ 
+     private Claims extractAllClaims(String token) {
+         return Jwts
+-                .parserBuilder()
++                .parser()
+                 .setSigningKey(getSignInKey())
+                 .build()
+                 .parseClaimsJws(token)

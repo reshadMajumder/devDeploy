@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: security-dashboard
+  
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  jpa:
+    hibernate:
+      ddl-auto: create
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+  
+  security:
+    user:
+      name: admin
+      password: admin123
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 1038982589933-7a3vk2cvsjdjit9r75kn33ha0o79ibt9.apps.googleusercontent.com
+            client-secret: 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
+            scope:
+              - openid
+              - email
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+
+server:
+  port: 8081
+
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: 86400000 # 24 hours in milliseconds
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.devdeploy.security: DEBUG 
