@@ -1,0 +1,155 @@
+# Combined .gitignore for DevDeploy project
+
+# ============================================
+# JAVA / SPRING BOOT (Security Service)
+# ============================================
+
+# Gradle
+.gradle/
+build/
+gradle-app.setting
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Java
+*.class
+*.jar
+*.war
+*.ear
+*.logs
+*.tmp
+
+# Spring Boot
+application-*.yml
+application-*.properties
+
+# OAuth2 Credentials (Security)
+google-credentials.json
+oauth2-credentials.json
+
+# Test
+target/
+test-results/
+junit-reports/
+
+# Backup files
+*.bak
+
+# ============================================
+# PYTHON / DJANGO (Core Backend)
+# ============================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django stuff:
+db.sqlite3
+media
+staticfiles
+static
+*.pot
+*.pyc
+migrations/
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+debug.log
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# ============================================
+# NODE.JS / REACT (Frontend)
+# ============================================
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production build
+/build
+/dist
+
+# ============================================
+# COMMON / SHARED
+# ============================================
+
+# Environment Variables and Secrets
+.env
+*.env
+.env.local
+.env.development
+.env.test
+.env.production
+.env.*
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite
+*.h2.db
+
+# OS
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.gradle/

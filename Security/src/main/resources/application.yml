@@ -1,55 +1,72 @@
 spring:
   application:
-    name: security-dashboard
+    name: devdeploy-security-service
+  
+  profiles:
+    active: dev
   
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:devdeploy_security
     driver-class-name: org.h2.Driver
     username: sa
-    password: password
-  
+    password: 
+    
   h2:
     console:
       enabled: true
       path: /h2-console
+      settings:
+        web-allow-others: false
+        trace: false
   
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: create-drop
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
-  
+    
   security:
-    user:
-      name: admin
-      password: admin123
     oauth2:
       client:
         registration:
           google:
-            client-id: 1038982589933-7a3vk2cvsjdjit9r75kn33ha0o79ibt9.apps.googleusercontent.com
-            client-secret: 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
+            client-id: ${GOOGLE_CLIENT_ID:your-google-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:your-google-client-secret}
             scope:
               - openid
+              - profile
               - email
-        provider:
-          google:
-            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
-            token-uri: https://oauth2.googleapis.com/token
-            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
-            user-name-attribute: sub
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
 server:
   port: 8081
 
-jwt:
-  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-  expiration: 86400000 # 24 hours in milliseconds
+# DevDeploy specific configuration
+devdeploy:
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    expiration: 86400000 # 24 hours in milliseconds
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - http://localhost:5173
+  api:
+    base-path: /api/v1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
 
 logging:
   level:
-    org.springframework.security: DEBUG
-    com.devdeploy.security: DEBUG 
+    org.springframework.security: INFO
+    com.devdeploy.security: DEBUG
+    org.springframework.web: DEBUG

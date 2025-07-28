@@ -1,254 +1,313 @@
-# Security Dashboard
+# DevDeploy Security Service
 
-A Spring Boot application implementing JWT token-based authentication with role-based access control (USER and ADMIN roles).
+A modern Spring Boot 3.4 authentication and authorization microservice for the DevDeploy platform.
 
-## Features
+## 🔧 Prerequisites
 
-- **JWT Authentication**: Secure token-based authentication
-- **Role-Based Access Control**: USER and ADMIN roles with different permissions
-- **Spring Security**: Comprehensive security configuration
-- **H2 Database**: In-memory database for development
-- **RESTful API**: Complete REST API for authentication and dashboard operations
-- **Web Dashboard**: Modern web interface with Tailwind CSS
-- **Java 17**: Built with the latest LTS version
+### Java Version Issue Fix
 
-## Technology Stack
+**Current Issue:** You have Java 24 installed, but Spring Boot 3.4 requires Java 17 or 21.
 
-- **Backend**: Spring Boot 3.2.0, Spring Security, Spring Data JPA
-- **Database**: H2 (in-memory)
-- **Authentication**: JWT (JSON Web Tokens)
-- **Frontend**: HTML, Tailwind CSS, JavaScript (Axios)
-- **Build Tool**: Gradle
-- **Java Version**: 17
+**Solutions:**
 
-## Project Structure
+### Option 1: Install Java 21 (Recommended)
+```bash
+# Download and install Java 21 from:
+# https://adoptium.net/temurin/releases/?version=21
 
-```
-Security/
-├── src/main/java/com/devdeploy/security/
-│   ├── SecurityDashboardApplication.java
-│   ├── config/
-│   │   ├── SecurityConfig.java
-│   │   ├── ApplicationConfig.java
-│   │   ├── JwtService.java
-│   │   ├── JwtAuthenticationFilter.java
-│   │   └── DataInitializer.java
-│   ├── controller/
-│   │   ├── AuthenticationController.java
-│   │   ├── DashboardController.java
-│   │   └── WebController.java
-│   ├── dto/
-│   │   ├── AuthenticationRequest.java
-│   │   ├── AuthenticationResponse.java
-│   │   └── RegisterRequest.java
-│   ├── entity/
-│   │   ├── User.java
-│   │   └── Role.java
-│   ├── repository/
-│   │   └── UserRepository.java
-│   └── service/
-│       └── AuthenticationService.java
-├── src/main/resources/
-│   ├── application.yml
-│   └── templates/
-│       └── dashboard.html
-├── build.gradle
-├── settings.gradle
-└── README.md
+# After installation, set JAVA_HOME environment variable
+# Windows:
+set JAVA_HOME=C:\Program Files\Eclipse Adoptium\jdk-21.x.x.x-hotspot
+set PATH=%JAVA_HOME%\bin;%PATH%
+
+# Verify installation
+java -version
 ```
 
-## Getting Started
+### Option 2: Use Java Version Manager
+```bash
+# Install SDKMAN (Windows: use Git Bash or WSL)
+curl -s "https://get.sdkman.io" | bash
+source "$HOME/.sdkman/bin/sdkman-init.sh"
 
-### Prerequisites
+# Install Java 21
+sdk install java 21.0.1-tem
+sdk use java 21.0.1-tem
+```
 
-- Java 17 or higher
-- Gradle (or use the Gradle wrapper)
+### Option 3: Configure IDE to use Java 17/21
+If you're using IntelliJ IDEA or Eclipse, configure your project to use Java 17 or 21 specifically for this project.
 
-### Running the Application
+## 🚀 Quick Start
 
-1. **Clone and navigate to the Security directory:**
-   ```bash
-   cd Security
-   ```
+Once you have Java 17 or 21 installed:
 
-2. **Build the project:**
-   ```bash
-   ./gradlew build
-   ```
+```bash
+# Navigate to Security directory
+cd Security
 
-3. **Run the application:**
-   ```bash
-   ./gradlew bootRun
-   ```
+# Build the project
+./gradlew clean build
 
-4. **Access the application:**
-   - Web Dashboard: http://localhost:8081
-   - H2 Console: http://localhost:8081/h2-console
-   - API Base URL: http://localhost:8081/api/v1
+# Run the application
+./gradlew bootRun
+```
 
-### Default Credentials
+The application will start on `http://localhost:8081`
 
-The application automatically creates two users on startup:
+## 📋 API Endpoints
 
-- **Admin User:**
-  - Username: `admin`
-  - Password: `admin123`
-  - Role: `ADMIN`
+### Authentication Endpoints (Public)
+- `POST /api/v1/auth/register` - User registration
+- `POST /api/v1/auth/authenticate` - User login
+- `GET /api/v1/auth/health` - Health check
 
-- **Regular User:**
-  - Username: `user`
-  - Password: `user123`
-  - Role: `USER`
+### OAuth2 Endpoints
+- `GET /oauth2/authorization/google` - Google OAuth2 login
+- `GET /api/v1/oauth2/login/google` - Google login info
+- `GET /api/v1/oauth2/user` - Get OAuth2 user info (protected)
 
-## API Endpoints
-
-### Authentication Endpoints
-
-- `POST /api/v1/auth/register` - Register a new user
-- `POST /api/v1/auth/authenticate` - Login and get JWT token
-
-### User Endpoints (Requires USER or ADMIN role)
-
+### User Endpoints (Protected)
 - `GET /api/v1/user/profile` - Get user profile
-- `GET /api/v1/user/dashboard` - Get user dashboard data
+- `GET /api/v1/user/dashboard` - User dashboard
 
-### Admin Endpoints (Requires ADMIN role)
+### Development Endpoints
+- `GET /h2-console` - H2 Database console (dev only)
+- `GET /actuator/health` - Spring Boot health endpoint
+- `GET /oauth2-test.html` - OAuth2 testing interface
 
-- `GET /api/v1/admin/dashboard` - Get admin dashboard data
-- `GET /api/v1/admin/users` - Get all users
-- `DELETE /api/v1/admin/users/{userId}` - Delete a user
+## 🔒 Security Features
 
-### Public Endpoints
+- **JWT Authentication** - Stateless token-based authentication
+- **BCrypt Password Encoding** - Secure password hashing
+- **CORS Configuration** - Frontend integration support
+- **Role-based Authorization** - USER and ADMIN roles
+- **Google OAuth2 Integration** - Complete OAuth2 setup with Google
 
-- `GET /api/v1/health` - Health check
-- `GET /` - Web dashboard
-- `GET /dashboard` - Web dashboard
-- `GET /login` - Web dashboard
+## 🗄️ Database
 
-## API Usage Examples
+- **Development:** H2 in-memory database
+- **Console:** Available at `/h2-console` (dev mode)
+- **Credentials:** Username: `sa`, Password: (empty)
 
-### Register a new user
+## ⚙️ Configuration
+
+Key configuration in `src/main/resources/application.yml`:
+
+```yaml
+server:
+  port: 8081
+
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope:
+              - openid
+              - profile
+              - email
+
+devdeploy:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: 86400000 # 24 hours
+  cors:
+    allowed-origins:
+      - http://localhost:3000  # React dev server
+      - http://localhost:5173  # Vite dev server
+```
+
+## 🔧 Environment Variables
+
+For production, set these environment variables:
+- `JWT_SECRET` - JWT signing secret
+- `GOOGLE_CLIENT_ID` - Google OAuth2 client ID
+- `GOOGLE_CLIENT_SECRET` - Google OAuth2 client secret
+
+## 🧪 Testing API
+
+### Register a new user:
 ```bash
 curl -X POST http://localhost:8081/api/v1/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "newuser",
+    "username": "testuser",
     "password": "password123",
-    "email": "newuser@example.com",
-    "firstName": "New",
-    "lastName": "User",
-    "role": "USER"
+    "email": "test@example.com",
+    "firstName": "Test",
+    "lastName": "User"
   }'
 ```
 
-### Login
+### Login:
 ```bash
 curl -X POST http://localhost:8081/api/v1/auth/authenticate \
   -H "Content-Type: application/json" \
   -d '{
-    "username": "admin",
-    "password": "admin123"
+    "username": "testuser",
+    "password": "password123"
   }'
 ```
 
-### Access protected endpoint
+### Access protected endpoint:
 ```bash
 curl -X GET http://localhost:8081/api/v1/user/profile \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
-## Security Features
+### Test OAuth2:
+- Open browser: `http://localhost:8081/oauth2-test.html`
+- Or run: `./test-oauth2.ps1`
 
-### JWT Token Structure
-- **Algorithm**: HS256
-- **Expiration**: 24 hours (configurable)
-- **Claims**: Username, issued date, expiration date
+## 📁 Project Structure
 
-### Role-Based Access Control
-- **USER Role**: Can access user-specific endpoints
-- **ADMIN Role**: Can access both user and admin endpoints
-
-### Security Headers
-- CSRF protection disabled (for API usage)
-- Stateless session management
-- JWT token validation on each request
-
-## Configuration
-
-### Application Properties (`application.yml`)
-
-- **Server Port**: 8081
-- **Database**: H2 in-memory
-- **JWT Secret**: Base64 encoded secret key
-- **JWT Expiration**: 86400000ms (24 hours)
-
-### Customization
-
-To customize the application:
-
-1. **Change JWT Secret**: Update `jwt.secret` in `application.yml`
-2. **Modify Token Expiration**: Update `jwt.expiration` in `application.yml`
-3. **Add New Roles**: Extend the `Role` enum and update security configuration
-4. **Database**: Change from H2 to PostgreSQL/MySQL by updating dependencies and configuration
-
-## Development
-
-### Adding New Endpoints
-
-1. Create a new controller method
-2. Add appropriate `@PreAuthorize` annotations for role-based access
-3. Update security configuration if needed
-
-### Adding New Roles
-
-1. Add new role to the `Role` enum
-2. Update security configuration in `SecurityConfig.java`
-3. Add role-specific endpoints and logic
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Port already in use**: Change the port in `application.yml`
-2. **JWT token expired**: Re-authenticate to get a new token
-3. **Access denied**: Check user role and endpoint permissions
-
-### Logs
-
-Enable debug logging by setting:
-```yaml
-logging:
-  level:
-    org.springframework.security: DEBUG
-    com.devdeploy.security: DEBUG
+```
+src/main/java/com/devdeploy/security/
+├── config/              # Security and application configuration
+├── controller/          # REST controllers
+├── dto/                # Data Transfer Objects
+├── entity/             # JPA entities
+├── filter/             # Security filters
+├── repository/         # Data repositories
+├── service/            # Business logic services
+└── DevDeploySecurityApplication.java
 ```
 
-## Contributing
+## 🔄 Integration with Other Services
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+This service integrates with:
+- **Frontend (React)** - Provides authentication tokens
+- **Core (Django)** - Validates JWT tokens for API access
+- **Database** - Stores user authentication data
 
-## License
+## 🐛 Troubleshooting
 
-This project is for educational purposes and can be used as a reference for implementing JWT authentication with Spring Security. 
+### Java Version Issues
+- Ensure Java 17 or 21 is installed and set as JAVA_HOME
+- Verify with `java -version` and `javac -version`
 
-The application is **not running**—the health endpoint is not reachable (`Connection refused`).  
-This means Spring Boot did not start successfully, or it crashed on startup.
+### Build Issues
+- Clean build: `./gradlew clean build`
+- Skip tests: `./gradlew build -x test`
 
-### Next Steps
+### Port Conflicts
+- Change port in `application.yml` if 8081 is in use
+- Check for other running Spring Boot applications
 
-1. **Check the application logs/output for errors.**
-   - If you started the app in the background, you may not see the error.
-   - Let's run it in the foreground to see the error message.
+## 🚀 Production Deployment
 
-2. **Run this command and watch for errors:**
-   ```sh
-   ./gradlew bootRun --no-daemon
-   ```
-   (Make sure you are in the `Security` directory.)
+1. Build the application: `./gradlew build`
+2. The JAR file will be in `build/libs/`
+3. Run with: `java -jar build/libs/devdeploy-security-service-0.0.1-SNAPSHOT.jar`
+4. Configure environment variables for production database and secrets
 
-**If you see any error messages, please copy and paste them here.**  
-This will help me diagnose and fix the problem for you! 
+---
+# 🚀 DevDeploy
+
+**DevDeploy** is a next-gen, developer-centric deployment platform built for freelancers, beginners, and startups who want a powerful, affordable alternative to Vercel or Render. Deploy your full-stack projects to your own VPS with just a few clicks—no DevOps expertise required.
+
+---
+
+## 🌟 Why DevDeploy?
+- **No Recurring Fees:** Pay a one-time, ultra-low service fee per VPS (e.g., ৳200)
+- **Bring Your Own VPS:** Full control, zero vendor lock-in
+- **Modern CI/CD:** Automated builds & deployments from GitHub
+- **Real-Time Logs:** See exactly what’s happening, as it happens
+- **Secure by Design:** SSH credentials are encrypted and never shared
+- **Made for You:** Especially affordable for developers in regions like Bangladesh
+
+---
+
+## 🧩 Microservices Architecture
+DevDeploy is built as a set of modern microservices:
+- **Authentication Service:** User login & registration powered by Spring Boot
+- **API Backend:** Core deployment logic with Django REST Framework (DRF)
+- **Frontend:** Lightning-fast React app (Vite + Tailwind CSS)
+
+---
+
+## 🚦 Key Features
+- **Sign Up & Login** (Spring Boot Auth Service)
+- **Connect GitHub**
+- **Add Your VPS (SSH)**
+- **Deploy Dockerized Projects**
+- **Automated CI/CD**
+- **Real-Time Status & Logs**
+
+---
+
+## 🎯 Goals & Vision
+- Make deployment as easy as pushing to GitHub
+- Remove DevOps complexity for everyone
+- Empower developers to own their infrastructure
+- Keep costs ultra-low and predictable
+
+---
+
+## 🛠️ Tech Stack
+- **Frontend:** React, Vite, Tailwind CSS
+- **Backend:** Django REST Framework
+- **Auth:** Spring Boot microservice
+- **CI/CD:** GitHub Actions, Docker
+- **VPS:** Any server with SSH access
+
+---
+
+## 🚀 Quickstart
+
+### Backend (Django + DRF)
+```sh
+cd core
+python -m venv env
+# Windows:
+env\Scripts\activate
+# Linux/Mac:
+source env/bin/activate
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+### Frontend (React)
+```sh
+cd frontend
+npm install
+npm run dev
+```
+
+### Auth Service (Spring Boot)
+- See `/auth-service` (coming soon) for setup and API docs
+
+---
+
+## 🔄 Deployment Workflow
+1. **Connect GitHub**
+2. **Add VPS (SSH)**
+3. **Configure Dockerized Project**
+4. **Push to Deploy (CI/CD)**
+5. **Monitor Logs & Status**
+
+---
+
+## 🔒 Security
+- All SSH credentials are encrypted and securely stored
+- Only you can access your deployments
+
+---
+
+## 🤝 Contributing
+We love contributions! Open issues, suggest features, or submit PRs.
+
+---
+
+## 📄 License
+MIT License
+
+---
+
+> DevDeploy: Modern DevOps, democratized. Own your deployment journey.
+>>>>>>> efdb4c2a471b9de297d1c32abec701e24b50909a
