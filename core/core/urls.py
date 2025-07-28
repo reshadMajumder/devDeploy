@@ -23,4 +23,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/react/', include('react_deploy.urls')),
     path('api/django/', include('django_deploy.urls')),
+    path('api/accounts/', include('accounts.urls')),
 ]+static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

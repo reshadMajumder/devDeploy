@@ -7,6 +7,7 @@ class VPS(models.Model):
     pem_file_name = models.CharField(max_length=255, null=True, blank=True)
     pem_file_content = models.BinaryField(null=True, blank=True)  # PEM file binary content
     connected = models.BooleanField(default=False)
+    username = models.CharField(max_length=150, null=True, blank=True)  # Track user
 
     def __str__(self):
         return f"{self.name} ({'Connected' if self.connected else 'Disconnected'})"
@@ -18,6 +19,7 @@ class Deployment(models.Model):
     wsgi_path = models.CharField(max_length=255,null=True, blank=True)
     deployed_at = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=50, default="pending")
+    username = models.CharField(max_length=150, null=True, blank=True)  # Track user
 
     def __str__(self):
         return f"Deployment to {self.ip_address} ({self.status})"

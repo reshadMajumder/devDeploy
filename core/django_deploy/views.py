@@ -13,6 +13,7 @@ from .models import Deployment, VPS
 from .aws import create_instance
 from .models import UserInstance
 from django.utils.timezone import now
+from .auth import jwt_required
 
 
 
@@ -20,10 +21,12 @@ from django.utils.timezone import now
 
 @api_view(['POST', 'GET'])
 @parser_classes([MultiPartParser, FormParser])
+@jwt_required
 def connect_vps_view(request):
+    user_info = request.jwt_payload
+    username = user_info.get("sub")
     if request.method == 'GET':
-        # Return all available VPSs (do not include sensitive pem_file_content)
-        vps_list = VPS.objects.all().values('id', 'ip_address', 'name', 'connected', 'pem_file_name')
+        vps_list = VPS.objects.filter(username=username).values('id', 'ip_address', 'name', 'connected', 'pem_file_name')
         return Response({'status': 'success', 'vps': list(vps_list)})
 
     # POST method: connect a new VPS
@@ -40,7 +43,8 @@ def connect_vps_view(request):
                 'name': name,
                 'pem_file_name': pem_file.name,
                 'pem_file_content': pem_content,
-                'connected': False  # Initially false, update after success
+                'connected': False,
+                'username': username,
             }
         )
         pem_path = write_pem_tempfile(pem_file.name, pem_content)
@@ -59,12 +63,14 @@ def connect_vps_view(request):
                 'name': name,
                 'pem_file_name': pem_file.name,
                 'pem_file_content': pem_content,
-                'connected': False
+                'connected': False,
+                'username': username,
             }
         )
         return Response({'status': 'error', 'message': str(e)})
 
 @api_view(['POST'])
+@jwt_required
 def install_dependencies(request):
     ip = request.data.get('ip')
     if not ip:
@@ -115,7 +121,10 @@ def install_dependencies(request):
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
+@jwt_required
 def deploy_project(request):
+    user_info = request.jwt_payload
+    username = user_info.get("sub")
     ip = request.data.get('ip')
     repo_url = request.data.get('repo_url')
     django_root = request.data.get('django_root')
@@ -180,7 +189,8 @@ def deploy_project(request):
             repo_url=repo_url,
             django_root=django_root,
             wsgi_path=wsgi_path,
-            status="deployed"
+            status="deployed",
+            username=username,
         )
 
         return Response({'status': 'success', 'message': f'Project deployed at http://{server_name}', 'stdout': out})
@@ -193,7 +203,10 @@ def deploy_project(request):
 
 
 @api_view(['POST'])
+@jwt_required
 def redeploy_project(request):
+    user_info = request.jwt_payload
+    username = user_info.get("sub")
     ip = request.data.get('ip')
     django_root = request.data.get('django_root')
     repo_url = request.data.get('repo_url')
@@ -241,6 +254,7 @@ def redeploy_project(request):
 
 @api_view(['POST'])
 @parser_classes([MultiPartParser, FormParser])
+@jwt_required
 def deploy_project_aws(request):
     repo_url = request.data.get('repo_url')
     django_root = request.data.get('django_root')

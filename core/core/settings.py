@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+import base64
 
 load_dotenv()
 
@@ -94,6 +95,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# Spring Boot Auth Service Integration
+SPRING_AUTH_URL = os.getenv('SPRING_AUTH_URL', 'http://localhost:8081/api/v1/auth/authenticate')
+JWT_SECRET_RAW = os.getenv('JWT_SECRET', '404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970')
+JWT_SECRET = base64.b64decode(JWT_SECRET_RAW)
+JWT_ALGORITHM = os.getenv('JWT_ALGORITHM', 'HS256')
 
 
 # Password validation
